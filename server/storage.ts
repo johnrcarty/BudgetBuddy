@@ -584,31 +584,13 @@ export const storage = {
   
   /**
    * Import budget data to a specific month
-   * @param year Year to import data to
-   * @param month Month to import data to (1-12)
+   * @param year Default year to import data to
+   * @param month Default month to import data to (1-12)
    * @param data Array of budget items to import
    */
   async importBudgetData(year: number, month: number, data: any[]) {
-    // Get or create the target month
-    let budgetMonth = await db.query.budgetMonths.findFirst({
-      where: and(
-        eq(budgetMonths.year, year),
-        eq(budgetMonths.month, month)
-      ),
-    });
-    
-    // If month doesn't exist, create it
-    if (!budgetMonth) {
-      const [newMonth] = await db.insert(budgetMonths)
-        .values({
-          year,
-          month,
-          isActive: true,
-        })
-        .returning();
-      
-      budgetMonth = newMonth;
-    }
+    // Track existing/created months to avoid redundant lookups
+    const monthCache: Record<string, any> = {};
     
     // Get all categories to match imported data
     const allCategories = await db.query.categories.findMany();
@@ -618,11 +600,56 @@ export const storage = {
       success: 0,
       failed: 0,
       categoryCreated: 0,
+      monthsCreated: 0,
       errors: [] as string[]
     };
     
     for (const item of data) {
       try {
+        // Determine which month to use for this item
+        let targetYear = year;
+        let targetMonth = month;
+        
+        // Check if item has a specific month field
+        if (item.month) {
+          const parsedMonth = parseMonthString(item.month.toString());
+          if (parsedMonth) {
+            targetYear = parsedMonth.year;
+            targetMonth = parsedMonth.month;
+          }
+        }
+        
+        // Get or create the appropriate budget month for this item
+        const monthKey = `${targetYear}-${targetMonth}`;
+        let budgetMonth = monthCache[monthKey];
+        
+        if (!budgetMonth) {
+          // Check if month exists in database
+          budgetMonth = await db.query.budgetMonths.findFirst({
+            where: and(
+              eq(budgetMonths.year, targetYear),
+              eq(budgetMonths.month, targetMonth)
+            ),
+          });
+          
+          // If month doesn't exist, create it
+          if (!budgetMonth) {
+            const [newMonth] = await db.insert(budgetMonths)
+              .values({
+                year: targetYear,
+                month: targetMonth,
+                isActive: true,
+              })
+              .returning();
+            
+            budgetMonth = newMonth;
+            importResults.monthsCreated++;
+          }
+          
+          // Store in cache for future lookups
+          monthCache[monthKey] = budgetMonth;
+        }
+        
         // Try to find matching category or create a new one
         let categoryName = (item.category || '').toString().toLowerCase().trim();
         let categoryType = item.type || 'expense';

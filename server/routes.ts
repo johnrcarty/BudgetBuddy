@@ -62,7 +62,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       return res.json({ 
-        message: `Successfully imported ${result.success} items, created ${result.categoryCreated} categories`,
+        message: `Successfully imported ${result.success} items to ${result.monthsCreated + 1} months, created ${result.categoryCreated} categories`,
         ...result,
         success: true
       });
