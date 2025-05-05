@@ -84,11 +84,11 @@ export default function RevenueCategorySection({ revenueItems, totals }: Revenue
         </div>
         
         {/* Revenue Items Header */}
-        <div className="hidden sm:grid sm:grid-cols-14 gap-4 px-6 py-3 bg-gray-50 text-sm font-medium text-gray-500">
-          <div className="sm:col-span-4">Item</div>
+        <div className="hidden sm:grid sm:grid-cols-12 gap-4 px-6 py-3 bg-gray-50 text-sm font-medium text-gray-500">
+          <div className="sm:col-span-3">Item</div>
           <div className="sm:col-span-3 text-right">Expected</div>
           <div className="sm:col-span-3 text-right">Actual</div>
-          <div className="sm:col-span-3 text-right">Variance</div>
+          <div className="sm:col-span-2 text-right">Variance</div>
           <div className="sm:col-span-1 text-right">Actions</div>
         </div>
         
@@ -100,8 +100,8 @@ export default function RevenueCategorySection({ revenueItems, totals }: Revenue
             </div>
           ) : (
             revenueItems.map((item) => (
-              <div key={item.id} className="px-6 py-4 sm:grid sm:grid-cols-14 sm:gap-4">
-                <div className="sm:col-span-4 mb-2 sm:mb-0 flex justify-between sm:block">
+              <div key={item.id} className="px-6 py-4 sm:grid sm:grid-cols-12 sm:gap-4">
+                <div className="sm:col-span-3 mb-2 sm:mb-0 flex justify-between sm:block">
                   <div className="flex items-center">
                     <div className="font-medium text-gray-800">{item.name}</div>
                     <div className="flex ml-2 items-center">
@@ -138,7 +138,7 @@ export default function RevenueCategorySection({ revenueItems, totals }: Revenue
                   <div className="font-mono text-gray-700">{formatCurrency(item.actualAmount)}</div>
                 </div>
                 
-                <div className="sm:col-span-3 mb-2 sm:mb-0 flex justify-between sm:justify-end sm:text-right">
+                <div className="sm:col-span-2 mb-2 sm:mb-0 flex justify-between sm:justify-end sm:text-right">
                   <div className="sm:hidden text-sm text-gray-500">Variance</div>
                   <span className={`font-mono ${getVarianceClass(item.variance, true)}`}>
                     {item.variance > 0 ? '+' : ''}{formatCurrency(item.variance)}
@@ -170,15 +170,15 @@ export default function RevenueCategorySection({ revenueItems, totals }: Revenue
           )}
           
           {/* Revenue Total */}
-          <div className="px-6 py-4 sm:grid sm:grid-cols-14 sm:gap-4 bg-gray-50">
-            <div className="sm:col-span-4 font-semibold text-gray-800">Total Revenue</div>
+          <div className="px-6 py-4 sm:grid sm:grid-cols-12 sm:gap-4 bg-gray-50">
+            <div className="sm:col-span-3 font-semibold text-gray-800">Total Revenue</div>
             <div className="sm:col-span-3 font-mono font-semibold text-right text-gray-800">
               {formatCurrency(totals.expectedTotalRevenue)}
             </div>
             <div className="sm:col-span-3 font-mono font-semibold text-right text-gray-800">
               {formatCurrency(totals.actualTotalRevenue)}
             </div>
-            <div className={`sm:col-span-3 font-mono font-semibold text-right ${getVarianceClass(totals.revenueVariance, true)}`}>
+            <div className={`sm:col-span-2 font-mono font-semibold text-right ${getVarianceClass(totals.revenueVariance, true)}`}>
               {totals.revenueVariance > 0 ? '+' : ''}{formatCurrency(totals.revenueVariance)}
             </div>
             <div className="sm:col-span-1">&nbsp;</div>

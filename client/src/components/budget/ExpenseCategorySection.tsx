@@ -65,15 +65,15 @@ export default function ExpenseCategorySection({ expenseCategories, totals }: Ex
           
           {/* Expense Totals */}
           <div className="mt-6 bg-white rounded-lg p-6 shadow">
-            <div className="grid grid-cols-1 sm:grid-cols-14 sm:gap-4">
-              <div className="sm:col-span-4 font-bold text-lg text-gray-800">Total Expenses</div>
+            <div className="grid grid-cols-1 sm:grid-cols-12 sm:gap-4">
+              <div className="sm:col-span-3 font-bold text-lg text-gray-800">Total Expenses</div>
               <div className="sm:col-span-3 text-right font-mono font-bold text-lg text-gray-800">
                 {formatCurrency(totals.expectedTotalExpenses)}
               </div>
               <div className="sm:col-span-3 text-right font-mono font-bold text-lg text-gray-800">
                 {formatCurrency(totals.actualTotalExpenses)}
               </div>
-              <div className={`sm:col-span-3 text-right font-mono font-bold text-lg ${getVarianceClass(totals.expensesVariance, false)}`}>
+              <div className={`sm:col-span-2 text-right font-mono font-bold text-lg ${getVarianceClass(totals.expensesVariance, false)}`}>
                 {totals.expensesVariance > 0 ? '+' : ''}{formatCurrency(totals.expensesVariance)}
               </div>
               <div className="sm:col-span-1">&nbsp;</div>
