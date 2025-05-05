@@ -99,6 +99,8 @@ export const storage = {
         category: 'revenue',
         expectedAmount: Number(item.expectedAmount),
         actualAmount: Number(item.actualAmount || 0),
+        dueDate: item.dueDate,
+        isPaid: item.isPaid || false,
         variance: calculateVariance(Number(item.actualAmount || 0), Number(item.expectedAmount)),
       }));
     
@@ -120,6 +122,8 @@ export const storage = {
             category: category.name,
             expectedAmount: Number(item.expectedAmount),
             actualAmount: Number(item.actualAmount || 0),
+            dueDate: item.dueDate,
+            isPaid: item.isPaid || false,
             variance: calculateVariance(Number(item.actualAmount || 0), Number(item.expectedAmount)),
           }));
         
@@ -212,6 +216,8 @@ export const storage = {
           name: item.name,
           expectedAmount: item.expectedAmount,
           actualAmount: "0", // Reset actual amount for the new month
+          dueDate: item.dueDate, // Keep the same due date (adjusted for the new month) if it exists
+          isPaid: false, // Reset paid status for the new month
         }));
         
         await db.insert(budgetItems).values(newItems);
@@ -251,6 +257,12 @@ export const storage = {
       throw new Error(`Category not found: ${data.category}`);
     }
     
+    // Parse due date if provided
+    let dueDate = null;
+    if (data.dueDate) {
+      dueDate = new Date(data.dueDate);
+    }
+    
     // Create the budget item
     const [newItem] = await db.insert(budgetItems)
       .values({
@@ -259,6 +271,8 @@ export const storage = {
         name: data.name,
         expectedAmount: data.expectedAmount.toString(),
         actualAmount: (data.actualAmount || 0).toString(),
+        dueDate: dueDate,
+        isPaid: data.isPaid || false,
       })
       .returning();
     
@@ -268,6 +282,8 @@ export const storage = {
       category: data.category,
       expectedAmount: Number(newItem.expectedAmount),
       actualAmount: Number(newItem.actualAmount || 0),
+      dueDate: newItem.dueDate,
+      isPaid: newItem.isPaid || false,
     };
   },
   
@@ -284,6 +300,12 @@ export const storage = {
       throw new Error(`Category not found: ${data.category}`);
     }
     
+    // Parse due date if provided
+    let dueDate = null;
+    if (data.dueDate) {
+      dueDate = new Date(data.dueDate);
+    }
+    
     // Update the budget item
     const [updatedItem] = await db.update(budgetItems)
       .set({
@@ -291,6 +313,8 @@ export const storage = {
         name: data.name,
         expectedAmount: data.expectedAmount.toString(),
         actualAmount: (data.actualAmount || 0).toString(),
+        dueDate: dueDate,
+        isPaid: data.isPaid || false,
         updatedAt: new Date(),
       })
       .where(eq(budgetItems.id, id))
@@ -306,6 +330,8 @@ export const storage = {
       category: data.category,
       expectedAmount: Number(updatedItem.expectedAmount),
       actualAmount: Number(updatedItem.actualAmount || 0),
+      dueDate: updatedItem.dueDate,
+      isPaid: updatedItem.isPaid || false,
     };
   },
   

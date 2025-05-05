@@ -40,6 +40,8 @@ export default function BudgetItemDialog({ open, onOpenChange, category, item }:
       category: category,
       expectedAmount: 0,
       actualAmount: 0,
+      dueDate: null,
+      isPaid: false,
     },
   });
   
@@ -52,6 +54,8 @@ export default function BudgetItemDialog({ open, onOpenChange, category, item }:
           category: item.category || category,
           expectedAmount: item.expectedAmount,
           actualAmount: item.actualAmount || 0,
+          dueDate: item.dueDate ? new Date(item.dueDate).toISOString().split('T')[0] : null,
+          isPaid: item.isPaid || false,
         });
       } else {
         form.reset({
@@ -59,6 +63,8 @@ export default function BudgetItemDialog({ open, onOpenChange, category, item }:
           category: category,
           expectedAmount: 0,
           actualAmount: 0,
+          dueDate: null,
+          isPaid: false,
         });
       }
     }

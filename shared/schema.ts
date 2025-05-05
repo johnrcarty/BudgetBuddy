@@ -29,6 +29,8 @@ export const budgetItems = pgTable("budget_items", {
   name: text("name").notNull(),
   expectedAmount: decimal("expected_amount", { precision: 10, scale: 2 }).notNull().default("0"),
   actualAmount: decimal("actual_amount", { precision: 10, scale: 2 }).default("0"),
+  dueDate: timestamp("due_date"),
+  isPaid: boolean("is_paid").default(false),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -75,6 +77,8 @@ export const budgetItemFormSchema = z.object({
   category: z.string().min(1, "Category is required"),
   expectedAmount: z.coerce.number().min(0, "Expected amount must be a positive number"),
   actualAmount: z.coerce.number().min(0, "Actual amount must be a positive number").optional(),
+  dueDate: z.string().nullable().optional(),
+  isPaid: z.boolean().default(false).optional(),
 });
 
 export type BudgetItemForm = z.infer<typeof budgetItemFormSchema>;
