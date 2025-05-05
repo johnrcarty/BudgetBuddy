@@ -33,20 +33,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const loginMutation = useMutation({
     mutationFn: async (credentials: LoginData) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      if (!res.ok) {
+      const result = await apiRequest("POST", "/api/login", credentials);
+      
+      // If result is a Response object (error case), handle it
+      if (result instanceof Response) {
         try {
-          const errorData = await res.json();
+          const errorData = await result.json();
           throw new Error(errorData.error || "Login failed");
         } catch (e) {
           throw new Error("Login failed - server error");
         }
       }
-      try {
-        return await res.json();
-      } catch (e) {
-        throw new Error("Could not parse server response");
-      }
+      
+      // Otherwise, result is already the parsed JSON
+      return result;
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -66,20 +66,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const registerMutation = useMutation({
     mutationFn: async (credentials: InsertUser) => {
-      const res = await apiRequest("POST", "/api/register", credentials);
-      if (!res.ok) {
+      const result = await apiRequest("POST", "/api/register", credentials);
+      
+      // If result is a Response object (error case), handle it
+      if (result instanceof Response) {
         try {
-          const errorData = await res.json();
+          const errorData = await result.json();
           throw new Error(errorData.error || "Registration failed");
         } catch (e) {
           throw new Error("Registration failed - server error");
         }
       }
-      try {
-        return await res.json();
-      } catch (e) {
-        throw new Error("Could not parse server response");
-      }
+      
+      // Otherwise, result is already the parsed JSON
+      return result;
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);

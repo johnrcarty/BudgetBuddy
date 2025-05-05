@@ -19,9 +19,12 @@ export async function apiRequest(
     credentials: "include",
   });
 
-  await throwIfResNotOk(res);
+  // For non-OK responses, still return the response to let the caller handle errors
+  if (!res.ok) {
+    return res;
+  }
   
-  // For GET requests, parse the response as JSON
+  // For GET requests or JSON responses, parse the response as JSON
   if (method.toUpperCase() === 'GET' || res.headers.get('Content-Type')?.includes('application/json')) {
     return res.json();
   }
