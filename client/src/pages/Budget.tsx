@@ -1,4 +1,4 @@
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { format } from "date-fns";
 import { apiRequest, queryClient } from "@/lib/queryClient";
@@ -8,12 +8,16 @@ import MonthNavigation from "@/components/budget/MonthNavigation";
 import BudgetSummary from "@/components/budget/BudgetSummary";
 import RevenueCategorySection from "@/components/budget/RevenueCategorySection";
 import ExpenseCategorySection from "@/components/budget/ExpenseCategorySection";
+import CategoryManagement from "@/components/budget/CategoryManagement";
 import { Button } from "@/components/ui/button";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatCurrency } from "@/lib/utils";
+import { Settings } from "lucide-react";
 
 export default function Budget() {
   const { toast } = useToast();
   const isMobile = useMobile();
+  const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   
   // Get current month data
   const { data: currentMonth, isLoading } = useQuery({

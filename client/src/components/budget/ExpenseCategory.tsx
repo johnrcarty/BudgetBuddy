@@ -3,9 +3,11 @@ import { useMutation } from "@tanstack/react-query";
 import { apiRequest, queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, ChevronDown, ChevronUp } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Pencil, Trash2, ChevronDown, ChevronUp, Calendar, CheckCircle2 } from "lucide-react";
 import { formatCurrency, getVarianceClass } from "@/lib/utils";
 import BudgetItemDialog from "./BudgetItemDialog";
+import { format } from "date-fns";
 
 interface ExpenseCategoryProps {
   categoryData: {
@@ -16,6 +18,8 @@ interface ExpenseCategoryProps {
       name: string;
       expectedAmount: number;
       actualAmount: number;
+      dueDate?: string | null;
+      isPaid?: boolean;
       variance: number;
     }>;
     totals: {
@@ -101,7 +105,29 @@ export default function ExpenseCategory({ categoryData, onAddItem }: ExpenseCate
                 categoryData.items.map((item) => (
                   <div key={item.id} className="px-4 py-3 sm:grid sm:grid-cols-12 sm:gap-4 bg-white">
                     <div className="sm:col-span-4 mb-2 sm:mb-0 flex justify-between sm:block">
-                      <div className="font-medium text-gray-800">{item.name}</div>
+                      <div className="flex items-center">
+                        <div className="font-medium text-gray-800">{item.name}</div>
+                        <div className="flex ml-2 items-center">
+                          {item.dueDate && (
+                            <div className="flex items-center text-xs mr-2">
+                              <Calendar className="h-3 w-3 text-gray-400 mr-1" />
+                              <span className="text-gray-500">
+                                {format(new Date(item.dueDate), 'MMM d')}
+                              </span>
+                            </div>
+                          )}
+                          {item.isPaid ? (
+                            <Badge variant="outline" className="text-xs bg-green-50 text-green-600 border-green-200 flex items-center">
+                              <CheckCircle2 className="h-3 w-3 mr-1" />
+                              Paid
+                            </Badge>
+                          ) : item.dueDate ? (
+                            <Badge variant="outline" className="text-xs bg-yellow-50 text-yellow-600 border-yellow-200">
+                              Due
+                            </Badge>
+                          ) : null}
+                        </div>
+                      </div>
                       <div className="sm:hidden text-sm text-gray-500">Item</div>
                     </div>
                     
