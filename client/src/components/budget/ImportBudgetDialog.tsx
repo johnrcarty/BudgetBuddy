@@ -32,7 +32,8 @@ const JSON_TEMPLATE = `[
     "expectedAmount": 5000,
     "actualAmount": 5000,
     "dueDate": "2023-05-15",
-    "isPaid": true
+    "isPaid": true,
+    "month": "May 2023"
   },
   {
     "name": "Rent",
@@ -41,7 +42,8 @@ const JSON_TEMPLATE = `[
     "expectedAmount": 1200,
     "actualAmount": 1200,
     "dueDate": "2023-05-01",
-    "isPaid": true
+    "isPaid": true,
+    "month": "May 2023"
   },
   {
     "name": "Groceries",
@@ -49,7 +51,16 @@ const JSON_TEMPLATE = `[
     "type": "expense",
     "expectedAmount": 400,
     "actualAmount": 380,
-    "isPaid": true
+    "isPaid": true,
+    "month": "May 2023"
+  },
+  {
+    "name": "Salary",
+    "category": "income",
+    "type": "revenue",
+    "expectedAmount": 5000,
+    "actualAmount": 5000,
+    "month": "June 2023"
   }
 ]`;
 
@@ -269,6 +280,7 @@ export default function ImportBudgetDialog({ open, onOpenChange }: ImportBudgetD
                 
                 <h4 className="font-medium mb-2 mt-3">Optional Fields:</h4>
                 <ul className="list-disc pl-5 space-y-1 text-xs">
+                  <li><strong>month:</strong> Month and year (e.g., "January 2023") - if not provided, uses the date selected in the Import Month field</li>
                   <li><strong>actualAmount:</strong> Actual amount spent or received</li>
                   <li><strong>dueDate:</strong> Due date in any standard format</li>
                   <li><strong>isPaid:</strong> Boolean indicating payment status</li>

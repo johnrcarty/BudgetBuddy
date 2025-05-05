@@ -83,6 +83,115 @@ function parseFlexibleDate(dateStr: string): Date | null {
   return null;
 }
 
+/**
+ * Parse a month string (e.g., "January 2023") to get year and month number
+ * @returns An object with year and month (1-12) or null if parsing fails
+ */
+function parseMonthString(monthStr: string): { year: number; month: number } | null {
+  if (!monthStr) return null;
+  
+  // Try to parse as "Month Year" format (e.g., "January 2023")
+  try {
+    const date = parse(monthStr, 'MMMM yyyy', new Date());
+    if (!isNaN(date.getTime())) {
+      return {
+        year: date.getFullYear(),
+        month: date.getMonth() + 1
+      };
+    }
+  } catch (e) {
+    // Continue to other formats
+  }
+  
+  // Try abbreviated month format (e.g., "Jan 2023")
+  try {
+    const date = parse(monthStr, 'MMM yyyy', new Date());
+    if (!isNaN(date.getTime())) {
+      return {
+        year: date.getFullYear(),
+        month: date.getMonth() + 1
+      };
+    }
+  } catch (e) {
+    // Continue to other formats
+  }
+  
+  // Try numeric formats (e.g., "2023-01" or "01/2023")
+  try {
+    // Try yyyy-MM format
+    const date = parse(monthStr, 'yyyy-MM', new Date());
+    if (!isNaN(date.getTime())) {
+      return {
+        year: date.getFullYear(),
+        month: date.getMonth() + 1
+      };
+    }
+  } catch (e) {
+    // Continue to other formats
+  }
+  
+  try {
+    // Try MM/yyyy format
+    const date = parse(monthStr, 'MM/yyyy', new Date());
+    if (!isNaN(date.getTime())) {
+      return {
+        year: date.getFullYear(),
+        month: date.getMonth() + 1
+      };
+    }
+  } catch (e) {
+    // Continue to other formats
+  }
+  
+  // Last resort: try to extract year and month from the string
+  const parts = monthStr.split(/\s+|\/|-/);
+  if (parts.length === 2) {
+    // Try to determine which part is the year and which is the month
+    const yearIndex = parts.findIndex(part => /^\d{4}$/.test(part));
+    if (yearIndex !== -1) {
+      const year = parseInt(parts[yearIndex]);
+      const monthPart = parts[1 - yearIndex];
+      
+      // Try to parse the month part as a number or a month name
+      let month: number;
+      
+      if (/^\d{1,2}$/.test(monthPart)) {
+        // It's a number (1-12)
+        month = parseInt(monthPart);
+        if (month >= 1 && month <= 12) {
+          return { year, month };
+        }
+      } else {
+        // Try to match it against month names
+        const monthNames = [
+          'january', 'february', 'march', 'april', 'may', 'june',
+          'july', 'august', 'september', 'october', 'november', 'december'
+        ];
+        const monthNamesShort = [
+          'jan', 'feb', 'mar', 'apr', 'may', 'jun',
+          'jul', 'aug', 'sep', 'oct', 'nov', 'dec'
+        ];
+        
+        const lowerMonthPart = monthPart.toLowerCase();
+        
+        // Try full month names
+        const fullMonthIndex = monthNames.indexOf(lowerMonthPart);
+        if (fullMonthIndex !== -1) {
+          return { year, month: fullMonthIndex + 1 };
+        }
+        
+        // Try abbreviated month names
+        const shortMonthIndex = monthNamesShort.indexOf(lowerMonthPart);
+        if (shortMonthIndex !== -1) {
+          return { year, month: shortMonthIndex + 1 };
+        }
+      }
+    }
+  }
+  
+  return null;
+}
+
 export const storage = {
   /**
    * Get current month data
