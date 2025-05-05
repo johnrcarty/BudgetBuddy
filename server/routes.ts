@@ -67,7 +67,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const result = await storage.importBudgetData(
         date.getFullYear(), 
         date.getMonth() + 1, 
-        validatedData.data
+        validatedData.data,
+        req.user?.id
       );
       
       return res.json({ 
@@ -94,7 +95,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid number of months. Must be between 1 and 36.' });
       }
       
-      const historyData = await storage.getBudgetHistory(months);
+      const historyData = await storage.getBudgetHistory(months, req.user?.id);
       return res.json(historyData);
     } catch (error) {
       console.error('Error fetching budget history:', error);
@@ -105,7 +106,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Export current month budget as CSV
   app.get('/api/budget/export/current', requireAuth, async (req, res) => {
     try {
-      const currentMonth = await storage.getCurrentMonth();
+      const currentMonth = await storage.getCurrentMonth(req.user?.id);
       
       // Create CSV content
       let csvContent = 'Month,' + currentMonth.month + '\n\n';
@@ -162,7 +163,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(400).json({ error: 'Invalid number of months. Must be between 1 and 36.' });
       }
       
-      const historyData = await storage.getBudgetHistory(months);
+      const historyData = await storage.getBudgetHistory(months, req.user?.id);
       
       // Create CSV content
       let csvContent = 'BUDGET HISTORY\n\n';
@@ -220,7 +221,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/budget/items', requireAuth, async (req, res) => {
     try {
       const validatedData = budgetItemFormSchema.parse(req.body);
-      const newItem = await storage.createBudgetItem(validatedData);
+      const newItem = await storage.createBudgetItem(validatedData, req.user?.id);
       return res.status(201).json(newItem);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -241,7 +242,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = idSchema.parse({ id: req.params.id });
       const validatedData = budgetItemFormSchema.parse(req.body);
       
-      const updatedItem = await storage.updateBudgetItem(id, validatedData);
+      const updatedItem = await storage.updateBudgetItem(id, validatedData, req.user?.id);
       
       if (!updatedItem) {
         return res.status(404).json({ error: 'Budget item not found' });
@@ -265,7 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       
       const { id } = idSchema.parse({ id: req.params.id });
-      const result = await storage.deleteBudgetItem(id);
+      const result = await storage.deleteBudgetItem(id, req.user?.id);
       
       if (!result) {
         return res.status(404).json({ error: 'Budget item not found' });
