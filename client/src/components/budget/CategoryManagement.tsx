@@ -74,7 +74,16 @@ export default function CategoryManagement() {
     queryKey: ['/api/categories'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/categories');
-      return response as any[];
+      if (Array.isArray(response)) {
+        return response as {
+          id: number;
+          name: string;
+          displayName: string;
+          type: 'revenue' | 'expense';
+          sortOrder: number;
+        }[];
+      }
+      return [];
     },
   });
 

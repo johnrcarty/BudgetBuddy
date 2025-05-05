@@ -19,8 +19,28 @@ export default function Budget() {
   const isMobile = useMobile();
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
   
+  interface MonthData {
+    month: string;
+    revenueItems: any[];
+    expenseCategories: any[];
+    totals: {
+      expectedTotalRevenue: number;
+      actualTotalRevenue: number;
+      expectedTotalExpenses: number;
+      actualTotalExpenses: number;
+      expectedNetIncome: number;
+      actualNetIncome: number;
+      revenueVariance: number;
+      expensesVariance: number;
+      netIncomeVariance: number;
+      revenueVariancePercentage: number;
+      expensesVariancePercentage: number;
+      netIncomeVariancePercentage: number;
+    };
+  }
+
   // Get current month data
-  const { data: currentMonth, isLoading } = useQuery({
+  const { data: currentMonth, isLoading } = useQuery<MonthData>({
     queryKey: ['/api/budget/current-month'],
   });
   
@@ -52,6 +72,14 @@ export default function Budget() {
           <div className="flex justify-between items-center">
             <h1 className="text-2xl font-bold text-gray-800">Monthly Budget Tracker</h1>
             <div className="flex space-x-2">
+              <Button 
+                variant="outline"
+                className="border-gray-300"
+                onClick={() => setIsCategoryDialogOpen(true)}
+              >
+                <Settings className="h-4 w-4 mr-2" />
+                Categories
+              </Button>
               <Button 
                 variant="default" 
                 className="bg-primary text-white"
@@ -91,6 +119,18 @@ export default function Budget() {
           </div>
         </>
       )}
+
+      {/* Category Management Dialog */}
+      <Dialog open={isCategoryDialogOpen} onOpenChange={setIsCategoryDialogOpen}>
+        <DialogContent className="max-w-4xl">
+          <DialogHeader>
+            <DialogTitle>Category Management</DialogTitle>
+          </DialogHeader>
+          <div className="mt-4">
+            <CategoryManagement />
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
