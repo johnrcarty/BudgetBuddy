@@ -1,0 +1,94 @@
+import { useState, useEffect } from "react";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { format, parse, addMonths, subMonths } from "date-fns";
+import { apiRequest, queryClient } from "@/lib/queryClient";
+import { useToast } from "@/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { ChevronLeft, ChevronRight } from "lucide-react";
+
+export default function MonthNavigation() {
+  const { toast } = useToast();
+  const [isNavigating, setIsNavigating] = useState(false);
+  
+  // Get current month data
+  const { data: currentMonth, isLoading } = useQuery({
+    queryKey: ['/api/budget/current-month'],
+  });
+  
+  // Navigate to a different month
+  const { mutate: navigateMonth } = useMutation({
+    mutationFn: async (date: string) => {
+      return await apiRequest('POST', '/api/budget/navigate', { date });
+    },
+    onMutate: () => {
+      setIsNavigating(true);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/budget/current-month'] });
+      setIsNavigating(false);
+    },
+    onError: (error) => {
+      toast({
+        title: "Navigation Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+      setIsNavigating(false);
+    },
+  });
+  
+  // Navigate to the previous month
+  const navigateToPreviousMonth = () => {
+    if (!currentMonth || isNavigating) return;
+    
+    const currentDate = parse(currentMonth.month, 'MMMM yyyy', new Date());
+    const prevDate = subMonths(currentDate, 1);
+    const formattedDate = format(prevDate, 'yyyy-MM-dd');
+    
+    navigateMonth(formattedDate);
+  };
+  
+  // Navigate to the next month (copying previous month data if needed)
+  const navigateToNextMonth = () => {
+    if (!currentMonth || isNavigating) return;
+    
+    const currentDate = parse(currentMonth.month, 'MMMM yyyy', new Date());
+    const nextDate = addMonths(currentDate, 1);
+    const formattedDate = format(nextDate, 'yyyy-MM-dd');
+    
+    navigateMonth(formattedDate);
+  };
+  
+  return (
+    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+      <div className="bg-white rounded-lg shadow p-4 flex justify-between items-center">
+        <Button 
+          variant="ghost" 
+          size="icon"
+          className="p-2 rounded-full hover:bg-slate-100"
+          onClick={navigateToPreviousMonth}
+          disabled={isNavigating || isLoading}
+        >
+          <ChevronLeft className="h-6 w-6 text-gray-500" />
+        </Button>
+        
+        <div className="flex flex-col items-center">
+          <h2 className="text-xl font-semibold text-gray-800">
+            {isLoading ? "Loading..." : currentMonth?.month}
+          </h2>
+          <p className="text-sm text-gray-500">Budget Planner</p>
+        </div>
+        
+        <Button 
+          variant="ghost" 
+          size="icon" 
+          className="p-2 rounded-full hover:bg-slate-100"
+          onClick={navigateToNextMonth}
+          disabled={isNavigating || isLoading}
+        >
+          <ChevronRight className="h-6 w-6 text-gray-500" />
+        </Button>
+      </div>
+    </div>
+  );
+}
