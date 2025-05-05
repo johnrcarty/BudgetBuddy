@@ -535,7 +535,7 @@ export const storage = {
         if (!category) {
           const displayName = categoryName
             .split(/[_\-\s]/)
-            .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+            .map((part: string) => part.charAt(0).toUpperCase() + part.slice(1))
             .join(' ');
           
           const [newCategory] = await db.insert(categories)

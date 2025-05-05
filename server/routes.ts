@@ -62,9 +62,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       );
       
       return res.json({ 
-        success: true, 
         message: `Successfully imported ${result.success} items, created ${result.categoryCreated} categories`,
-        ...result 
+        ...result,
+        success: true
       });
     } catch (error) {
       if (error instanceof z.ZodError) {

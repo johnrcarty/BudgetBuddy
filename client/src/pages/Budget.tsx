@@ -84,6 +84,15 @@ export default function Budget() {
                 <Settings className="h-4 w-4 mr-1 sm:mr-2" />
                 <span className="sm:inline">Categories</span>
               </Button>
+              <Button 
+                variant="outline"
+                size={isMobile ? "sm" : "default"}
+                className="border-gray-300"
+                onClick={() => setIsImportDialogOpen(true)}
+              >
+                <Upload className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="sm:inline">Import</span>
+              </Button>
               <Link href="/visualization">
                 <Button 
                   variant="outline"
@@ -149,6 +158,12 @@ export default function Budget() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {/* Import Budget Dialog */}
+      <ImportBudgetDialog 
+        open={isImportDialogOpen} 
+        onOpenChange={setIsImportDialogOpen} 
+      />
     </div>
   );
 }

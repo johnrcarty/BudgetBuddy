@@ -6,12 +6,32 @@ import { useToast } from "@/hooks/use-toast";
 import { Button } from "@/components/ui/button";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+interface MonthData {
+  month: string;
+  revenueItems: any[];
+  expenseCategories: any[];
+  totals: {
+    expectedTotalRevenue: number;
+    actualTotalRevenue: number;
+    expectedTotalExpenses: number;
+    actualTotalExpenses: number;
+    expectedNetIncome: number;
+    actualNetIncome: number;
+    revenueVariance: number;
+    expensesVariance: number;
+    netIncomeVariance: number;
+    revenueVariancePercentage: number;
+    expensesVariancePercentage: number;
+    netIncomeVariancePercentage: number;
+  };
+}
+
 export default function MonthNavigation() {
   const { toast } = useToast();
   const [isNavigating, setIsNavigating] = useState(false);
   
   // Get current month data
-  const { data: currentMonth, isLoading } = useQuery({
+  const { data: currentMonth, isLoading } = useQuery<MonthData>({
     queryKey: ['/api/budget/current-month'],
   });
   
