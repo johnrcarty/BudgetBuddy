@@ -130,8 +130,10 @@ export function setupAuth(app: Express) {
         
         req.login(user, (loginErr) => {
           if (loginErr) return next(loginErr);
-          // Return sanitized user object
-          const { password, ...userWithoutPassword } = user;
+          // Return sanitized user object (ensure it's a UserWithPassword type that has the password property)
+          // Cast to any to safely handle the password property which might not be on the User type
+          const userData = user as any;
+          const { password, ...userWithoutPassword } = userData;
           return res.status(200).json(userWithoutPassword);
         });
       })(req, res, next);
