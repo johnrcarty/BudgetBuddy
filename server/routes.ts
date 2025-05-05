@@ -31,6 +31,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const validatedData = schema.parse(req.body);
       const date = new Date(validatedData.date);
       
+      // Update the selected month in the storage
+      storage.setSelectedMonth(date.getFullYear(), date.getMonth() + 1);
+      
       // Get or create month data
       const monthData = await storage.getOrCreateMonth(date.getFullYear(), date.getMonth() + 1);
       return res.json(monthData);
@@ -53,6 +56,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
       
       const validatedData = schema.parse(req.body);
       const date = new Date(validatedData.date);
+      
+      // Update the selected month after import
+      storage.setSelectedMonth(date.getFullYear(), date.getMonth() + 1);
       
       // Import the data to the specified month
       const result = await storage.importBudgetData(

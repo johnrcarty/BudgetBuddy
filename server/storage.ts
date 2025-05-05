@@ -192,17 +192,27 @@ function parseMonthString(monthStr: string): { year: number; month: number } | n
   return null;
 }
 
+// Store the selected month (defaults to current month)
+let selectedMonth = {
+  year: new Date().getFullYear(),
+  month: new Date().getMonth() + 1
+};
+
 export const storage = {
+  /**
+   * Set the selected month
+   */
+  setSelectedMonth(year: number, month: number): void {
+    selectedMonth.year = year;
+    selectedMonth.month = month;
+  },
+
   /**
    * Get current month data
    */
   async getCurrentMonth(): Promise<MonthData> {
-    // Get the most recent budget month, or create current month if none exists
-    const today = new Date();
-    const currentYear = today.getFullYear();
-    const currentMonth = today.getMonth() + 1;
-    
-    return this.getOrCreateMonth(currentYear, currentMonth);
+    // Return the selected month (which may have been changed by navigation)
+    return this.getOrCreateMonth(selectedMonth.year, selectedMonth.month);
   },
   
   /**
