@@ -98,26 +98,26 @@ export default function BudgetVisualization() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="bg-white shadow fixed top-0 left-0 right-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <div className="flex items-center">
+          <div className="flex flex-col sm:flex-row sm:justify-between space-y-3 sm:space-y-0 sm:items-center">
+            <div className="flex flex-wrap items-center gap-2">
               <Link href="/">
-                <Button variant="outline" className="mr-4">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Budget
+                <Button variant="outline" size="sm" className="min-w-0">
+                  <ArrowLeft className="h-4 w-4 sm:mr-2" />
+                  <span className="hidden sm:inline">Back to Budget</span>
                 </Button>
               </Link>
-              <h1 className="text-2xl font-bold text-gray-800">Budget Visualization</h1>
+              <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Budget Visualization</h1>
             </div>
-            <div className="flex items-center space-x-3">
-              <div className="flex items-center space-x-2">
-                <Label htmlFor="timeframe">Timeframe:</Label>
+            <div className="flex flex-wrap gap-2">
+              <div className="flex items-center gap-1 sm:gap-2">
+                <Label htmlFor="timeframe" className="text-sm whitespace-nowrap">Months:</Label>
                 <Select
                   value={months}
                   onValueChange={(value) => setMonths(value)}
                 >
-                  <SelectTrigger className="w-32">
+                  <SelectTrigger className="w-20 h-9">
                     <SelectValue placeholder="Months" />
                   </SelectTrigger>
                   <SelectContent>
@@ -128,25 +128,34 @@ export default function BudgetVisualization() {
                   </SelectContent>
                 </Select>
               </div>
-              <div className="flex space-x-2">
+              <div className="flex gap-2">
                 <Button 
                   variant="outline" 
+                  size="sm"
                   onClick={() => handleExportCsv('current')}
+                  className="whitespace-nowrap"
                 >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export Current Month
+                  <Download className="h-4 w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Export Current</span>
+                  <span className="sm:hidden">Current</span>
                 </Button>
                 <Button 
+                  size="sm"
                   onClick={() => handleExportCsv('history')}
+                  className="whitespace-nowrap"
                 >
-                  <Download className="h-4 w-4 mr-2" />
-                  Export History
+                  <Download className="h-4 w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Export History</span>
+                  <span className="sm:hidden">History</span>
                 </Button>
               </div>
             </div>
           </div>
         </div>
       </header>
+      
+      {/* Spacer to prevent content from hiding under fixed header */}
+      <div className="h-32 sm:h-24"></div>
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">

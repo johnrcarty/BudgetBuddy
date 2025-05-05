@@ -68,30 +68,33 @@ export default function Budget() {
   return (
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
-      <header className="bg-white shadow">
+      <header className="bg-white shadow fixed top-0 left-0 right-0 z-10">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-          <div className="flex justify-between items-center">
-            <h1 className="text-2xl font-bold text-gray-800">Monthly Budget Tracker</h1>
-            <div className="flex space-x-2">
+          <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-3">
+            <h1 className="text-xl sm:text-2xl font-bold text-gray-800">Monthly Budget Tracker</h1>
+            <div className="flex flex-wrap gap-2">
               <Button 
                 variant="outline"
+                size={isMobile ? "sm" : "default"}
                 className="border-gray-300"
                 onClick={() => setIsCategoryDialogOpen(true)}
               >
-                <Settings className="h-4 w-4 mr-2" />
-                Categories
+                <Settings className="h-4 w-4 mr-1 sm:mr-2" />
+                <span className="sm:inline">Categories</span>
               </Button>
               <Link href="/visualization">
                 <Button 
                   variant="outline"
+                  size={isMobile ? "sm" : "default"}
                   className="border-gray-300"
                 >
-                  <BarChart2 className="h-4 w-4 mr-2" />
-                  Visualize
+                  <BarChart2 className="h-4 w-4 mr-1 sm:mr-2" />
+                  <span className="sm:inline">Visualize</span>
                 </Button>
               </Link>
               <Button 
                 variant="default" 
+                size={isMobile ? "sm" : "default"}
                 className="bg-primary text-white"
                 onClick={() => saveBudget()}
                 disabled={isPending}
@@ -102,6 +105,9 @@ export default function Budget() {
           </div>
         </div>
       </header>
+      
+      {/* Spacer to prevent content from hiding under fixed header */}
+      <div className="h-24 sm:h-20"></div>
 
       {/* Month Navigation */}
       <MonthNavigation />

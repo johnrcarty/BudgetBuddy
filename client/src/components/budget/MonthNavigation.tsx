@@ -60,34 +60,36 @@ export default function MonthNavigation() {
   };
   
   return (
-    <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-      <div className="bg-white rounded-lg shadow p-4 flex justify-between items-center">
-        <Button 
-          variant="ghost" 
-          size="icon"
-          className="p-2 rounded-full hover:bg-slate-100"
-          onClick={navigateToPreviousMonth}
-          disabled={isNavigating || isLoading}
-        >
-          <ChevronLeft className="h-6 w-6 text-gray-500" />
-        </Button>
-        
-        <div className="flex flex-col items-center">
-          <h2 className="text-xl font-semibold text-gray-800">
-            {isLoading ? "Loading..." : currentMonth?.month}
-          </h2>
-          <p className="text-sm text-gray-500">Budget Planner</p>
+    <div className="sticky top-24 sm:top-20 z-10 bg-slate-50 pb-2 pt-0">
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div className="bg-white rounded-lg shadow p-3 flex justify-between items-center">
+          <Button 
+            variant="ghost" 
+            size="sm"
+            className="p-1 sm:p-2 rounded-full hover:bg-slate-100"
+            onClick={navigateToPreviousMonth}
+            disabled={isNavigating || isLoading}
+          >
+            <ChevronLeft className="h-5 w-5 text-gray-500" />
+          </Button>
+          
+          <div className="flex flex-col items-center px-2">
+            <h2 className="text-lg sm:text-xl font-semibold text-gray-800">
+              {isLoading ? "Loading..." : currentMonth?.month}
+            </h2>
+            <p className="text-xs sm:text-sm text-gray-500">Budget Planner</p>
+          </div>
+          
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            className="p-1 sm:p-2 rounded-full hover:bg-slate-100"
+            onClick={navigateToNextMonth}
+            disabled={isNavigating || isLoading}
+          >
+            <ChevronRight className="h-5 w-5 text-gray-500" />
+          </Button>
         </div>
-        
-        <Button 
-          variant="ghost" 
-          size="icon" 
-          className="p-2 rounded-full hover:bg-slate-100"
-          onClick={navigateToNextMonth}
-          disabled={isNavigating || isLoading}
-        >
-          <ChevronRight className="h-6 w-6 text-gray-500" />
-        </Button>
       </div>
     </div>
   );
