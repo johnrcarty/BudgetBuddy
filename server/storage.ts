@@ -211,6 +211,42 @@ let selectedMonth = {
 
 export const storage = {
   /**
+   * Get a user by ID
+   */
+  async getUser(id: number): Promise<User | undefined> {
+    const user = await db.query.users.findFirst({
+      where: eq(users.id, id),
+    });
+    
+    if (!user) return undefined;
+    
+    // Omit password from returned user
+    const { password, ...userWithoutPassword } = user;
+    return userWithoutPassword as User;
+  },
+  
+  /**
+   * Get a user by username (with password for auth)
+   */
+  async getUserByUsername(username: string): Promise<UserWithPassword | undefined> {
+    return await db.query.users.findFirst({
+      where: eq(users.username, username),
+    });
+  },
+  
+  /**
+   * Create a new user
+   */
+  async createUser(userData: InsertUser): Promise<User> {
+    const [newUser] = await db.insert(users)
+      .values(userData)
+      .returning();
+    
+    // Omit password from returned user
+    const { password, ...userWithoutPassword } = newUser;
+    return userWithoutPassword as User;
+  },
+  /**
    * Set the selected month
    */
   setSelectedMonth(year: number, month: number): void {
@@ -221,16 +257,17 @@ export const storage = {
   /**
    * Get current month data
    */
-  async getCurrentMonth(): Promise<MonthData> {
+  async getCurrentMonth(userId?: number): Promise<MonthData> {
     // Return the selected month (which may have been changed by navigation)
-    return this.getOrCreateMonth(selectedMonth.year, selectedMonth.month);
+    return this.getOrCreateMonth(selectedMonth.year, selectedMonth.month, userId);
   },
   
   /**
    * Get historical budget data for visualization and reporting
    * @param numMonths Number of months to fetch (including current month)
+   * @param userId Optional user ID to get data for a specific user
    */
-  async getBudgetHistory(numMonths: number = 6): Promise<MonthData[]> {
+  async getBudgetHistory(numMonths: number = 6, userId?: number): Promise<MonthData[]> {
     const today = new Date();
     const currentYear = today.getFullYear();
     const currentMonth = today.getMonth() + 1;
@@ -250,7 +287,7 @@ export const storage = {
       
       // Try to get month data, or create if it doesn't exist
       try {
-        const monthData = await this.getOrCreateMonth(year, month);
+        const monthData = await this.getOrCreateMonth(year, month, userId);
         months.push(monthData);
       } catch (error) {
         console.error(`Error getting data for ${month}/${year}:`, error);
@@ -318,15 +355,26 @@ export const storage = {
   },
   
   /**
-   * Get or create a budget month
+   * Get or create a budget month for a user
    */
-  async getOrCreateMonth(year: number, month: number): Promise<MonthData> {
+  async getOrCreateMonth(year: number, month: number, userId?: number): Promise<MonthData> {
+    // Build the where clause based on available information
+    const whereConditions = [
+      eq(budgetMonths.year, year),
+      eq(budgetMonths.month, month)
+    ];
+    
+    // Add user ID condition if provided
+    if (userId) {
+      whereConditions.push(eq(budgetMonths.userId, userId));
+    } else {
+      // If no user ID, look for entries without a user (for backward compatibility)
+      whereConditions.push(isNull(budgetMonths.userId));
+    }
+    
     // Check if the month exists
     let budgetMonth = await db.query.budgetMonths.findFirst({
-      where: and(
-        eq(budgetMonths.year, year),
-        eq(budgetMonths.month, month)
-      ),
+      where: and(...whereConditions),
     });
     
     // If month doesn't exist, create it
@@ -437,12 +485,13 @@ export const storage = {
   /**
    * Create a new budget month
    */
-  async createMonth(year: number, month: number) {
+  async createMonth(year: number, month: number, userId?: number) {
     // Create the new month
     const [newMonth] = await db.insert(budgetMonths)
       .values({
         year,
         month,
+        userId,
         isActive: true,
       })
       .returning();

@@ -8,10 +8,13 @@ import { eq } from "drizzle-orm";
 import { createObjectCsvWriter } from 'csv-writer';
 import path from 'path';
 import fs from 'fs';
+import { setupAuth, requireAuth } from "./auth";
 
 export async function registerRoutes(app: Express): Promise<Server> {
+  // Set up authentication
+  setupAuth(app);
   // Get current month budget data
-  app.get('/api/budget/current-month', async (req, res) => {
+  app.get('/api/budget/current-month', requireAuth, async (req, res) => {
     try {
       const currentMonth = await storage.getCurrentMonth();
       return res.json(currentMonth);
