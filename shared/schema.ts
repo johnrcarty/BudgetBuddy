@@ -1,7 +1,22 @@
-import { pgTable, text, serial, integer, boolean, timestamp, decimal } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, decimal, uniqueIndex } from "drizzle-orm/pg-core";
 import { createInsertSchema, createSelectSchema } from "drizzle-zod";
 import { relations } from "drizzle-orm";
 import { z } from "zod";
+
+// Users table
+export const users = pgTable("users", {
+  id: serial("id").primaryKey(),
+  username: text("username").notNull(),
+  password: text("password").notNull(),
+  email: text("email"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => {
+  return {
+    usernameIdx: uniqueIndex("username_idx").on(table.username),
+    emailIdx: uniqueIndex("email_idx").on(table.email),
+  };
+});
 
 // Categories table
 export const categories = pgTable("categories", {
@@ -15,6 +30,7 @@ export const categories = pgTable("categories", {
 // Budget months table (stores metadata for each month)
 export const budgetMonths = pgTable("budget_months", {
   id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id),
   year: integer("year").notNull(),
   month: integer("month").notNull(), // 1-12
   createdAt: timestamp("created_at").defaultNow().notNull(),
@@ -36,12 +52,20 @@ export const budgetItems = pgTable("budget_items", {
 });
 
 // Define relations
+export const usersRelations = relations(users, ({ many }) => ({
+  budgetMonths: many(budgetMonths),
+}));
+
 export const categoriesRelations = relations(categories, ({ many }) => ({
   budgetItems: many(budgetItems),
 }));
 
-export const budgetMonthsRelations = relations(budgetMonths, ({ many }) => ({
+export const budgetMonthsRelations = relations(budgetMonths, ({ many, one }) => ({
   budgetItems: many(budgetItems),
+  user: one(users, {
+    fields: [budgetMonths.userId],
+    references: [users.id],
+  }),
 }));
 
 export const budgetItemsRelations = relations(budgetItems, ({ one }) => ({
@@ -82,3 +106,26 @@ export const budgetItemFormSchema = z.object({
 });
 
 export type BudgetItemForm = z.infer<typeof budgetItemFormSchema>;
+
+// User schemas
+export const usersInsertSchema = createInsertSchema(users, {
+  username: (schema) => schema.min(3, "Username must be at least 3 characters"),
+  password: (schema) => schema.min(6, "Password must be at least 6 characters"),
+  email: (schema) => schema.email("Must provide a valid email").optional(),
+});
+export type InsertUser = z.infer<typeof usersInsertSchema>;
+
+export const usersSelectSchema = createSelectSchema(users);
+export type UserWithPassword = z.infer<typeof usersSelectSchema>;
+export type User = Omit<UserWithPassword, "password">;
+
+export const userRegisterSchema = z.object({
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  email: z.string().email("Must provide a valid email").optional(),
+});
+
+export const userLoginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+});

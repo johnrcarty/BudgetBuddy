@@ -1,8 +1,19 @@
 import { db } from "@db";
-import { budgetMonths, budgetItems, categories } from "@shared/schema";
-import { and, eq, desc, sql, asc } from "drizzle-orm";
+import { budgetMonths, budgetItems, categories, users, InsertUser, User, UserWithPassword } from "@shared/schema";
+import { and, eq, desc, sql, asc, isNull } from "drizzle-orm";
 import { format, parse } from "date-fns";
 import { BudgetItemForm } from "@shared/schema";
+import connectPgSimple from "connect-pg-simple";
+import session from "express-session";
+import { pool } from "@db";
+
+// Set up session store with PostgreSQL
+const PostgresStore = connectPgSimple(session);
+export const sessionStore = new PostgresStore({
+  pool,
+  tableName: "session", // Default is "session"
+  createTableIfMissing: true,
+});
 
 interface MonthData {
   month: string;
