@@ -35,10 +35,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: async (credentials: LoginData) => {
       const res = await apiRequest("POST", "/api/login", credentials);
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Login failed");
+        try {
+          const errorData = await res.json();
+          throw new Error(errorData.error || "Login failed");
+        } catch (e) {
+          throw new Error("Login failed - server error");
+        }
       }
-      return await res.json();
+      try {
+        return await res.json();
+      } catch (e) {
+        throw new Error("Could not parse server response");
+      }
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
@@ -60,10 +68,18 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     mutationFn: async (credentials: InsertUser) => {
       const res = await apiRequest("POST", "/api/register", credentials);
       if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Registration failed");
+        try {
+          const errorData = await res.json();
+          throw new Error(errorData.error || "Registration failed");
+        } catch (e) {
+          throw new Error("Registration failed - server error");
+        }
       }
-      return await res.json();
+      try {
+        return await res.json();
+      } catch (e) {
+        throw new Error("Could not parse server response");
+      }
     },
     onSuccess: (user: SelectUser) => {
       queryClient.setQueryData(["/api/user"], user);
