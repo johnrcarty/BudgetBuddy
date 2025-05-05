@@ -12,7 +12,8 @@ import CategoryManagement from "@/components/budget/CategoryManagement";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatCurrency } from "@/lib/utils";
-import { Settings } from "lucide-react";
+import { Settings, BarChart2 } from "lucide-react";
+import { Link } from "wouter";
 
 export default function Budget() {
   const { toast } = useToast();
@@ -80,6 +81,15 @@ export default function Budget() {
                 <Settings className="h-4 w-4 mr-2" />
                 Categories
               </Button>
+              <Link href="/visualization">
+                <Button 
+                  variant="outline"
+                  className="border-gray-300"
+                >
+                  <BarChart2 className="h-4 w-4 mr-2" />
+                  Visualize
+                </Button>
+              </Link>
               <Button 
                 variant="default" 
                 className="bg-primary text-white"
