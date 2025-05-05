@@ -43,6 +43,38 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
   
+  // Import budget data
+  app.post('/api/budget/import', async (req, res) => {
+    try {
+      const schema = z.object({
+        date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format. Use YYYY-MM-DD'),
+        data: z.array(z.any())
+      });
+      
+      const validatedData = schema.parse(req.body);
+      const date = new Date(validatedData.date);
+      
+      // Import the data to the specified month
+      const result = await storage.importBudgetData(
+        date.getFullYear(), 
+        date.getMonth() + 1, 
+        validatedData.data
+      );
+      
+      return res.json({ 
+        success: true, 
+        message: `Successfully imported ${result.success} items, created ${result.categoryCreated} categories`,
+        ...result 
+      });
+    } catch (error) {
+      if (error instanceof z.ZodError) {
+        return res.status(400).json({ errors: error.errors });
+      }
+      console.error('Error importing budget data:', error);
+      return res.status(500).json({ error: 'Failed to import budget data' });
+    }
+  });
+  
   // Get budget history for visualization
   app.get('/api/budget/history/:months?', async (req, res) => {
     try {

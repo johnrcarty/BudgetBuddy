@@ -47,6 +47,42 @@ function calculateVariancePercentage(variance: number, expected: number): number
   return (variance / expected) * 100;
 }
 
+/**
+ * Parse a date string in various formats to a Date object
+ */
+function parseFlexibleDate(dateStr: string): Date | null {
+  if (!dateStr) return null;
+  
+  // Try different date formats
+  const formats = [
+    'yyyy-MM-dd',
+    'MM/dd/yyyy',
+    'dd/MM/yyyy',
+    'M/d/yyyy',
+    'MMMM d, yyyy',
+    'MMM d, yyyy'
+  ];
+  
+  for (const formatStr of formats) {
+    try {
+      const date = parse(dateStr, formatStr, new Date());
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    } catch (e) {
+      // Continue trying other formats
+    }
+  }
+  
+  // Last resort: try native Date parsing
+  const date = new Date(dateStr);
+  if (!isNaN(date.getTime())) {
+    return date;
+  }
+  
+  return null;
+}
+
 export const storage = {
   /**
    * Get current month data
@@ -435,5 +471,155 @@ export const storage = {
       .returning();
     
     return deletedItem ? true : false;
+  },
+  
+  /**
+   * Import budget data to a specific month
+   * @param year Year to import data to
+   * @param month Month to import data to (1-12)
+   * @param data Array of budget items to import
+   */
+  async importBudgetData(year: number, month: number, data: any[]) {
+    // Get or create the target month
+    let budgetMonth = await db.query.budgetMonths.findFirst({
+      where: and(
+        eq(budgetMonths.year, year),
+        eq(budgetMonths.month, month)
+      ),
+    });
+    
+    // If month doesn't exist, create it
+    if (!budgetMonth) {
+      const [newMonth] = await db.insert(budgetMonths)
+        .values({
+          year,
+          month,
+          isActive: true,
+        })
+        .returning();
+      
+      budgetMonth = newMonth;
+    }
+    
+    // Get all categories to match imported data
+    const allCategories = await db.query.categories.findMany();
+    
+    // Process each import item
+    const importResults = {
+      success: 0,
+      failed: 0,
+      categoryCreated: 0,
+      errors: [] as string[]
+    };
+    
+    for (const item of data) {
+      try {
+        // Try to find matching category or create a new one
+        let categoryName = (item.category || '').toString().toLowerCase().trim();
+        let categoryType = item.type || 'expense';
+        
+        if (!categoryName) {
+          if (categoryType === 'revenue') {
+            categoryName = 'income';
+          } else {
+            categoryName = 'miscellaneous';
+          }
+        }
+        
+        let category = allCategories.find(c => 
+          c.name.toLowerCase() === categoryName &&
+          c.type === categoryType
+        );
+        
+        // Create category if it doesn't exist
+        if (!category) {
+          const displayName = categoryName
+            .split(/[_\-\s]/)
+            .map(part => part.charAt(0).toUpperCase() + part.slice(1))
+            .join(' ');
+          
+          const [newCategory] = await db.insert(categories)
+            .values({
+              name: categoryName,
+              displayName: displayName,
+              type: categoryType,
+              sortOrder: categoryType === 'revenue' ? 0 : 100, // Default sort order
+            })
+            .returning();
+          
+          category = newCategory;
+          allCategories.push(newCategory);
+          importResults.categoryCreated++;
+        }
+        
+        // Parse amounts
+        let expectedAmount = 0;
+        let actualAmount = 0;
+        
+        if (item.expectedAmount !== undefined) {
+          expectedAmount = typeof item.expectedAmount === 'number' 
+            ? item.expectedAmount 
+            : parseFloat(item.expectedAmount.toString().replace(/[^0-9.-]+/g, ''));
+        } else if (item.budgetAmount !== undefined) {
+          expectedAmount = typeof item.budgetAmount === 'number' 
+            ? item.budgetAmount 
+            : parseFloat(item.budgetAmount.toString().replace(/[^0-9.-]+/g, ''));
+        } else if (item.amount !== undefined) {
+          expectedAmount = typeof item.amount === 'number' 
+            ? item.amount 
+            : parseFloat(item.amount.toString().replace(/[^0-9.-]+/g, ''));
+        }
+        
+        if (item.actualAmount !== undefined) {
+          actualAmount = typeof item.actualAmount === 'number' 
+            ? item.actualAmount 
+            : parseFloat(item.actualAmount.toString().replace(/[^0-9.-]+/g, ''));
+        }
+        
+        // Handle negation for expense amounts if needed
+        if (categoryType === 'expense' && expectedAmount < 0) {
+          expectedAmount = Math.abs(expectedAmount);
+        }
+        if (categoryType === 'expense' && actualAmount < 0) {
+          actualAmount = Math.abs(actualAmount);
+        }
+        
+        // Parse due date if available
+        let dueDate = null;
+        if (item.dueDate) {
+          const parsedDate = parseFlexibleDate(item.dueDate.toString());
+          if (parsedDate) dueDate = parsedDate;
+        }
+        
+        // Parse payment status
+        let isPaid = false;
+        if (item.isPaid !== undefined) {
+          isPaid = !!item.isPaid;
+        } else if (item.paid !== undefined) {
+          isPaid = !!item.paid;
+        } else if (item.status && ['paid', 'complete', 'completed'].includes(item.status.toString().toLowerCase())) {
+          isPaid = true;
+        }
+        
+        // Create the budget item
+        await db.insert(budgetItems)
+          .values({
+            budgetMonthId: budgetMonth.id,
+            categoryId: category.id,
+            name: item.name || item.description || 'Imported Item',
+            expectedAmount: expectedAmount.toString(),
+            actualAmount: actualAmount.toString(),
+            dueDate: dueDate,
+            isPaid: isPaid,
+          });
+        
+        importResults.success++;
+      } catch (error) {
+        importResults.failed++;
+        importResults.errors.push(`Error importing item ${item.name || 'Unknown'}: ${error}`);
+      }
+    }
+    
+    return importResults;
   },
 };

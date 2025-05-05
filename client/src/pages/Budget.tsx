@@ -9,16 +9,18 @@ import BudgetSummary from "@/components/budget/BudgetSummary";
 import RevenueCategorySection from "@/components/budget/RevenueCategorySection";
 import ExpenseCategorySection from "@/components/budget/ExpenseCategorySection";
 import CategoryManagement from "@/components/budget/CategoryManagement";
+import ImportBudgetDialog from "@/components/budget/ImportBudgetDialog";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatCurrency } from "@/lib/utils";
-import { Settings, BarChart2 } from "lucide-react";
+import { Settings, BarChart2, Upload } from "lucide-react";
 import { Link } from "wouter";
 
 export default function Budget() {
   const { toast } = useToast();
   const isMobile = useMobile();
   const [isCategoryDialogOpen, setIsCategoryDialogOpen] = useState(false);
+  const [isImportDialogOpen, setIsImportDialogOpen] = useState(false);
   
   interface MonthData {
     month: string;
