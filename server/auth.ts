@@ -124,7 +124,7 @@ export function setupAuth(app: Express) {
       // Validate the login data
       userLoginSchema.parse(req.body);
       
-      passport.authenticate("local", (err, user, info) => {
+      passport.authenticate("local", (err: Error | null, user: Express.User | false, info: { message: string } | undefined) => {
         if (err) return next(err);
         if (!user) return res.status(401).json({ error: info?.message || "Authentication failed" });
         

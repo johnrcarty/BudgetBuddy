@@ -536,18 +536,28 @@ export const storage = {
   /**
    * Create a new budget item
    */
-  async createBudgetItem(data: BudgetItemForm) {
+  async createBudgetItem(data: BudgetItemForm, userId?: number) {
     // Get current month
-    const currentMonth = await this.getCurrentMonth();
+    const currentMonth = await this.getCurrentMonth(userId);
     const [monthYear, _] = currentMonth.month.split(' ');
     const monthDate = parse(currentMonth.month, 'MMMM yyyy', new Date());
     
-    // Get budget month record
+    // Get budget month record - build query conditions
+    const whereConditions = [
+      eq(budgetMonths.year, monthDate.getFullYear()),
+      eq(budgetMonths.month, monthDate.getMonth() + 1)
+    ];
+    
+    // Add user ID condition if provided
+    if (userId) {
+      whereConditions.push(eq(budgetMonths.userId, userId));
+    } else {
+      whereConditions.push(isNull(budgetMonths.userId));
+    }
+    
+    // Find budget month with these conditions
     const budgetMonth = await db.query.budgetMonths.findFirst({
-      where: and(
-        eq(budgetMonths.year, monthDate.getFullYear()),
-        eq(budgetMonths.month, monthDate.getMonth() + 1)
-      ),
+      where: and(...whereConditions),
     });
     
     if (!budgetMonth) {
@@ -596,7 +606,7 @@ export const storage = {
   /**
    * Update an existing budget item
    */
-  async updateBudgetItem(id: number, data: BudgetItemForm) {
+  async updateBudgetItem(id: number, data: BudgetItemForm, userId?: number) {
     // Get category ID
     const category = await db.query.categories.findFirst({
       where: eq(categories.name, data.category),
@@ -610,6 +620,23 @@ export const storage = {
     let dueDate = null;
     if (data.dueDate) {
       dueDate = new Date(data.dueDate);
+    }
+    
+    // Find the item first to check ownership
+    const existingItem = await db.query.budgetItems.findFirst({
+      where: eq(budgetItems.id, id),
+      with: {
+        budgetMonth: true
+      }
+    });
+    
+    if (!existingItem) {
+      return null;
+    }
+    
+    // Check if user has access to this item
+    if (userId && existingItem.budgetMonth.userId !== userId) {
+      return null; // User doesn't own this item
     }
     
     // Update the budget item
@@ -644,7 +671,24 @@ export const storage = {
   /**
    * Delete a budget item
    */
-  async deleteBudgetItem(id: number) {
+  async deleteBudgetItem(id: number, userId?: number) {
+    // Find the item first to check ownership
+    const existingItem = await db.query.budgetItems.findFirst({
+      where: eq(budgetItems.id, id),
+      with: {
+        budgetMonth: true
+      }
+    });
+    
+    if (!existingItem) {
+      return false;
+    }
+    
+    // Check if user has access to this item
+    if (userId && existingItem.budgetMonth.userId !== userId) {
+      return false; // User doesn't own this item
+    }
+    
     const [deletedItem] = await db.delete(budgetItems)
       .where(eq(budgetItems.id, id))
       .returning();
@@ -657,8 +701,9 @@ export const storage = {
    * @param year Default year to import data to
    * @param month Default month to import data to (1-12)
    * @param data Array of budget items to import
+   * @param userId Optional user ID to assign to the budget items
    */
-  async importBudgetData(year: number, month: number, data: any[]) {
+  async importBudgetData(year: number, month: number, data: any[], userId?: number) {
     // Track existing/created months to avoid redundant lookups
     const monthCache: Record<string, any> = {};
     
@@ -694,12 +739,22 @@ export const storage = {
         let budgetMonth = monthCache[monthKey];
         
         if (!budgetMonth) {
-          // Check if month exists in database
+          // Build query conditions for finding the month
+          const whereConditions = [
+            eq(budgetMonths.year, targetYear),
+            eq(budgetMonths.month, targetMonth)
+          ];
+          
+          // Add user ID condition if provided
+          if (userId) {
+            whereConditions.push(eq(budgetMonths.userId, userId));
+          } else {
+            whereConditions.push(isNull(budgetMonths.userId));
+          }
+          
+          // Check if month exists in database with the provided user ID
           budgetMonth = await db.query.budgetMonths.findFirst({
-            where: and(
-              eq(budgetMonths.year, targetYear),
-              eq(budgetMonths.month, targetMonth)
-            ),
+            where: and(...whereConditions),
           });
           
           // If month doesn't exist, create it
@@ -709,6 +764,7 @@ export const storage = {
                 year: targetYear,
                 month: targetMonth,
                 isActive: true,
+                userId: userId
               })
               .returning();
             
