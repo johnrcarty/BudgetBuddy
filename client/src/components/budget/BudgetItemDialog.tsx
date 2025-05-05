@@ -11,6 +11,8 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { CurrencyInput } from "@/components/ui/currency-input";
+import { Checkbox } from "@/components/ui/checkbox";
+import { CalendarIcon } from "lucide-react";
 
 // Form schema
 const budgetItemSchema = z.object({
@@ -18,6 +20,8 @@ const budgetItemSchema = z.object({
   category: z.string().min(1, "Category is required"),
   expectedAmount: z.coerce.number().min(0, "Expected amount must be a positive number"),
   actualAmount: z.coerce.number().min(0, "Actual amount must be a positive number").optional(),
+  dueDate: z.string().nullable().optional(),
+  isPaid: z.boolean().default(false),
 });
 
 type BudgetItemFormValues = z.infer<typeof budgetItemSchema>;
@@ -184,6 +188,51 @@ export default function BudgetItemDialog({ open, onOpenChange, category, item }:
                     />
                   </FormControl>
                   <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="dueDate"
+              render={({ field }) => (
+                <FormItem>
+                  <FormLabel>Due Date (Optional)</FormLabel>
+                  <FormControl>
+                    <div className="relative">
+                      <Input
+                        type="date"
+                        placeholder="Select due date"
+                        {...field}
+                        value={field.value || ""}
+                        onChange={(e) => {
+                          field.onChange(e.target.value || null);
+                        }}
+                      />
+                      <CalendarIcon className="absolute right-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                    </div>
+                  </FormControl>
+                  <FormMessage />
+                </FormItem>
+              )}
+            />
+            
+            <FormField
+              control={form.control}
+              name="isPaid"
+              render={({ field }) => (
+                <FormItem className="flex flex-row items-center space-x-3 space-y-0 rounded-md border p-4">
+                  <FormControl>
+                    <Checkbox
+                      checked={field.value}
+                      onCheckedChange={field.onChange}
+                    />
+                  </FormControl>
+                  <div className="space-y-1 leading-none">
+                    <FormLabel>
+                      Mark as Paid
+                    </FormLabel>
+                  </div>
                 </FormItem>
               )}
             />

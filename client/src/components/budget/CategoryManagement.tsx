@@ -74,7 +74,7 @@ export default function CategoryManagement() {
     queryKey: ['/api/categories'],
     queryFn: async () => {
       const response = await apiRequest('GET', '/api/categories');
-      return response;
+      return response as any[];
     },
   });
 
