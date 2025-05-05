@@ -61,6 +61,97 @@ export const storage = {
   },
   
   /**
+   * Get historical budget data for visualization and reporting
+   * @param numMonths Number of months to fetch (including current month)
+   */
+  async getBudgetHistory(numMonths: number = 6): Promise<MonthData[]> {
+    const today = new Date();
+    const currentYear = today.getFullYear();
+    const currentMonth = today.getMonth() + 1;
+    
+    const months: MonthData[] = [];
+    
+    // Start with current month and go back in time
+    for (let i = 0; i < numMonths; i++) {
+      let year = currentYear;
+      let month = currentMonth - i;
+      
+      // Adjust year and month if going to previous year
+      while (month <= 0) {
+        year--;
+        month += 12;
+      }
+      
+      // Try to get month data, or create if it doesn't exist
+      try {
+        const monthData = await this.getOrCreateMonth(year, month);
+        months.push(monthData);
+      } catch (error) {
+        console.error(`Error getting data for ${month}/${year}:`, error);
+      }
+    }
+    
+    // Return months in chronological order (oldest first)
+    return months.reverse();
+  },
+  
+  /**
+   * Get categories from the database
+   */
+  async getCategories() {
+    return await db.query.categories.findMany({
+      orderBy: [
+        asc(categories.type),
+        asc(categories.sortOrder)
+      ],
+    });
+  },
+  
+  /**
+   * Create a new category
+   */
+  async createCategory(data: any) {
+    const [newCategory] = await db.insert(categories)
+      .values({
+        name: data.name,
+        displayName: data.displayName,
+        type: data.type,
+        sortOrder: data.sortOrder,
+      })
+      .returning();
+    
+    return newCategory;
+  },
+  
+  /**
+   * Update a category
+   */
+  async updateCategory(id: number, data: any) {
+    const [updatedCategory] = await db.update(categories)
+      .set({
+        name: data.name,
+        displayName: data.displayName,
+        type: data.type,
+        sortOrder: data.sortOrder,
+      })
+      .where(eq(categories.id, id))
+      .returning();
+    
+    return updatedCategory;
+  },
+  
+  /**
+   * Delete a category
+   */
+  async deleteCategory(id: number) {
+    const [deletedCategory] = await db.delete(categories)
+      .where(eq(categories.id, id))
+      .returning();
+    
+    return deletedCategory ? true : false;
+  },
+  
+  /**
    * Get or create a budget month
    */
   async getOrCreateMonth(year: number, month: number): Promise<MonthData> {

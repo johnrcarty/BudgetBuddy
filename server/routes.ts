@@ -5,6 +5,9 @@ import { z } from "zod";
 import { storage } from "./storage";
 import { budgetItemFormSchema, categories } from "@shared/schema";
 import { eq } from "drizzle-orm";
+import { createObjectCsvWriter } from 'csv-writer';
+import path from 'path';
+import fs from 'fs';
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Get current month budget data
@@ -37,6 +40,127 @@ export async function registerRoutes(app: Express): Promise<Server> {
       }
       console.error('Error navigating to month:', error);
       return res.status(500).json({ error: 'Failed to navigate to month' });
+    }
+  });
+  
+  // Get budget history for visualization
+  app.get('/api/budget/history/:months?', async (req, res) => {
+    try {
+      const monthsParam = req.params.months;
+      const months = monthsParam ? parseInt(monthsParam) : 6; // Default to 6 months
+      
+      if (isNaN(months) || months < 1 || months > 36) {
+        return res.status(400).json({ error: 'Invalid number of months. Must be between 1 and 36.' });
+      }
+      
+      const historyData = await storage.getBudgetHistory(months);
+      return res.json(historyData);
+    } catch (error) {
+      console.error('Error fetching budget history:', error);
+      return res.status(500).json({ error: 'Failed to fetch budget history' });
+    }
+  });
+  
+  // Export current month budget as CSV
+  app.get('/api/budget/export/current', async (req, res) => {
+    try {
+      const currentMonth = await storage.getCurrentMonth();
+      
+      // Create CSV content
+      let csvContent = 'Month,' + currentMonth.month + '\n\n';
+      
+      // Revenue section
+      csvContent += 'REVENUE\n';
+      csvContent += 'Name,Expected Amount,Actual Amount,Due Date,Paid,Variance\n';
+      
+      for (const item of currentMonth.revenueItems) {
+        const dueDate = item.dueDate ? new Date(item.dueDate).toLocaleDateString() : '';
+        csvContent += `"${item.name}",${item.expectedAmount},${item.actualAmount},"${dueDate}",${item.isPaid ? 'Yes' : 'No'},${item.variance}\n`;
+      }
+      
+      csvContent += `Total,${currentMonth.totals.expectedTotalRevenue},${currentMonth.totals.actualTotalRevenue},,,"${currentMonth.totals.revenueVariance}"\n\n`;
+      
+      // Expenses section
+      csvContent += 'EXPENSES\n';
+      
+      for (const category of currentMonth.expenseCategories) {
+        csvContent += `${category.displayName.toUpperCase()}\n`;
+        csvContent += 'Name,Expected Amount,Actual Amount,Due Date,Paid,Variance\n';
+        
+        for (const item of category.items) {
+          const dueDate = item.dueDate ? new Date(item.dueDate).toLocaleDateString() : '';
+          csvContent += `"${item.name}",${item.expectedAmount},${item.actualAmount},"${dueDate}",${item.isPaid ? 'Yes' : 'No'},${item.variance}\n`;
+        }
+        
+        csvContent += `Total,${category.totals.expectedTotal},${category.totals.actualTotal},,,"${category.totals.variance}"\n\n`;
+      }
+      
+      // Summary section
+      csvContent += 'SUMMARY\n';
+      csvContent += `Total Revenue,${currentMonth.totals.expectedTotalRevenue},${currentMonth.totals.actualTotalRevenue},,,"${currentMonth.totals.revenueVariance}"\n`;
+      csvContent += `Total Expenses,${currentMonth.totals.expectedTotalExpenses},${currentMonth.totals.actualTotalExpenses},,,"${currentMonth.totals.expensesVariance}"\n`;
+      csvContent += `Net Income,${currentMonth.totals.expectedNetIncome},${currentMonth.totals.actualNetIncome},,,"${currentMonth.totals.netIncomeVariance}"\n`;
+      
+      // Set headers and send response
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="budget-${currentMonth.month.replace(' ', '-')}.csv"`);
+      return res.send(csvContent);
+    } catch (error) {
+      console.error('Error exporting budget to CSV:', error);
+      return res.status(500).json({ error: 'Failed to export budget data' });
+    }
+  });
+  
+  // Export budget history as CSV
+  app.get('/api/budget/export/history/:months?', async (req, res) => {
+    try {
+      const monthsParam = req.params.months;
+      const months = monthsParam ? parseInt(monthsParam) : 6; // Default to 6 months
+      
+      if (isNaN(months) || months < 1 || months > 36) {
+        return res.status(400).json({ error: 'Invalid number of months. Must be between 1 and 36.' });
+      }
+      
+      const historyData = await storage.getBudgetHistory(months);
+      
+      // Create CSV content
+      let csvContent = 'BUDGET HISTORY\n\n';
+      
+      // Months row
+      csvContent += 'Category,';
+      for (const month of historyData) {
+        csvContent += `${month.month} (Expected),${month.month} (Actual),`;
+      }
+      csvContent += '\n';
+      
+      // Revenue row
+      csvContent += 'Total Revenue,';
+      for (const month of historyData) {
+        csvContent += `${month.totals.expectedTotalRevenue},${month.totals.actualTotalRevenue},`;
+      }
+      csvContent += '\n';
+      
+      // Expenses row
+      csvContent += 'Total Expenses,';
+      for (const month of historyData) {
+        csvContent += `${month.totals.expectedTotalExpenses},${month.totals.actualTotalExpenses},`;
+      }
+      csvContent += '\n';
+      
+      // Net Income row
+      csvContent += 'Net Income,';
+      for (const month of historyData) {
+        csvContent += `${month.totals.expectedNetIncome},${month.totals.actualNetIncome},`;
+      }
+      csvContent += '\n';
+      
+      // Set headers and send response
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', `attachment; filename="budget-history-${months}-months.csv"`);
+      return res.send(csvContent);
+    } catch (error) {
+      console.error('Error exporting budget history to CSV:', error);
+      return res.status(500).json({ error: 'Failed to export budget history data' });
     }
   });
   
