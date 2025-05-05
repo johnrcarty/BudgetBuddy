@@ -2,7 +2,7 @@ import * as React from "react";
 import { Input } from "@/components/ui/input";
 
 interface CurrencyInputProps {
-  value: number;
+  value: number | undefined;
   onChange: (value: number) => void;
   placeholder?: string;
   className?: string;

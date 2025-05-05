@@ -72,19 +72,6 @@ export default function CategoryManagement() {
   // Query to get all categories
   const { data: categories, isLoading } = useQuery({
     queryKey: ['/api/categories'],
-    queryFn: async () => {
-      const response = await apiRequest('GET', '/api/categories');
-      if (Array.isArray(response)) {
-        return response as {
-          id: number;
-          name: string;
-          displayName: string;
-          type: 'revenue' | 'expense';
-          sortOrder: number;
-        }[];
-      }
-      return [];
-    },
   });
 
   // Mutation to add a new category
