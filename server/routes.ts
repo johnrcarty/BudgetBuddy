@@ -25,7 +25,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Navigate to a specific month
-  app.post('/api/budget/navigate', async (req, res) => {
+  app.post('/api/budget/navigate', requireAuth, async (req, res) => {
     try {
       const schema = z.object({
         date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format. Use YYYY-MM-DD')
@@ -50,7 +50,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Import budget data
-  app.post('/api/budget/import', async (req, res) => {
+  app.post('/api/budget/import', requireAuth, async (req, res) => {
     try {
       const schema = z.object({
         date: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format. Use YYYY-MM-DD'),
@@ -85,7 +85,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Get budget history for visualization
-  app.get('/api/budget/history/:months?', async (req, res) => {
+  app.get('/api/budget/history/:months?', requireAuth, async (req, res) => {
     try {
       const monthsParam = req.params.months;
       const months = monthsParam ? parseInt(monthsParam) : 6; // Default to 6 months
@@ -103,7 +103,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Export current month budget as CSV
-  app.get('/api/budget/export/current', async (req, res) => {
+  app.get('/api/budget/export/current', requireAuth, async (req, res) => {
     try {
       const currentMonth = await storage.getCurrentMonth();
       
@@ -153,7 +153,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Export budget history as CSV
-  app.get('/api/budget/export/history/:months?', async (req, res) => {
+  app.get('/api/budget/export/history/:months?', requireAuth, async (req, res) => {
     try {
       const monthsParam = req.params.months;
       const months = monthsParam ? parseInt(monthsParam) : 6; // Default to 6 months
@@ -206,7 +206,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Save budget data
-  app.post('/api/budget/save', async (req, res) => {
+  app.post('/api/budget/save', requireAuth, async (req, res) => {
     try {
       // Nothing to do here, as updates happen in real-time
       return res.json({ success: true, message: 'Budget data saved successfully' });
@@ -217,7 +217,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Create budget item
-  app.post('/api/budget/items', async (req, res) => {
+  app.post('/api/budget/items', requireAuth, async (req, res) => {
     try {
       const validatedData = budgetItemFormSchema.parse(req.body);
       const newItem = await storage.createBudgetItem(validatedData);
@@ -232,7 +232,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Update budget item
-  app.put('/api/budget/items/:id', async (req, res) => {
+  app.put('/api/budget/items/:id', requireAuth, async (req, res) => {
     try {
       const idSchema = z.object({
         id: z.coerce.number().positive('Invalid ID')
