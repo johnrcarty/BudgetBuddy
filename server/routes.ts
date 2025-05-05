@@ -16,7 +16,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Get current month budget data
   app.get('/api/budget/current-month', requireAuth, async (req, res) => {
     try {
-      const currentMonth = await storage.getCurrentMonth();
+      const currentMonth = await storage.getCurrentMonth(req.user?.id);
       return res.json(currentMonth);
     } catch (error) {
       console.error('Error fetching current month data:', error);
@@ -38,7 +38,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       storage.setSelectedMonth(date.getFullYear(), date.getMonth() + 1);
       
       // Get or create month data
-      const monthData = await storage.getOrCreateMonth(date.getFullYear(), date.getMonth() + 1);
+      const monthData = await storage.getOrCreateMonth(date.getFullYear(), date.getMonth() + 1, req.user?.id);
       return res.json(monthData);
     } catch (error) {
       if (error instanceof z.ZodError) {
@@ -258,7 +258,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Delete budget item
-  app.delete('/api/budget/items/:id', async (req, res) => {
+  app.delete('/api/budget/items/:id', requireAuth, async (req, res) => {
     try {
       const idSchema = z.object({
         id: z.coerce.number().positive('Invalid ID')
@@ -284,7 +284,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Category management routes
   
   // Get all categories
-  app.get('/api/categories', async (req, res) => {
+  app.get('/api/categories', requireAuth, async (req, res) => {
     try {
       const allCategories = await db.query.categories.findMany({
         orderBy: (categories, { asc }) => [asc(categories.sortOrder)],
@@ -297,7 +297,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Create a new category
-  app.post('/api/categories', async (req, res) => {
+  app.post('/api/categories', requireAuth, async (req, res) => {
     try {
       const categorySchema = z.object({
         name: z.string().min(1, "Name is required"),
@@ -335,7 +335,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Update a category
-  app.put('/api/categories/:id', async (req, res) => {
+  app.put('/api/categories/:id', requireAuth, async (req, res) => {
     try {
       const idSchema = z.object({
         id: z.coerce.number().positive('Invalid ID')
@@ -390,7 +390,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
   
   // Delete a category
-  app.delete('/api/categories/:id', async (req, res) => {
+  app.delete('/api/categories/:id', requireAuth, async (req, res) => {
     try {
       const idSchema = z.object({
         id: z.coerce.number().positive('Invalid ID')
